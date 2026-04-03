@@ -1,0 +1,54 @@
+{% extends 'recommend/base.html' %}
+{% block content %}
+<h1>电影列表</h1>
+
+<!-- 搜索和筛选表单 -->
+<form method="get" action="{% url 'movie_list' %}" style="margin-bottom: 20px;">
+    <input type="text" name="q" placeholder="搜索电影标题..." value="{{ query }}">
+    <select name="genre">
+        <option value="">所有类型</option>
+        {% for genre in all_genres %}
+            <option value="{{ genre }}" {% if selected_genre == genre %}selected{% endif %}>{{ genre }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">筛选</button>
+</form>
+
+<!-- 电影网格 -->
+<div class="movie-grid">
+    {% for movie in page_obj %}
+    <div class="movie-card">
+        <a href="{% url 'movie_detail' movie.id %}">
+            {% if movie.poster %}
+                <img src="{{ movie.poster }}" alt="{{ movie.title }}" width="150">
+            {% else %}
+                <img src="/static/recommend/images/default_poster.webp" alt="暂无海报" width="150">
+            {% endif %}
+            <p>{{ movie.title }}</p>
+            <p>评分: {{ movie.avg_rating|floatformat:1 }} ({{ movie.rating_count }}人)</p>
+        </a>
+    </div>
+    {% empty %}
+    <p>没有找到电影。</p>
+    {% endfor %}
+</div>
+
+<!-- 分页导航 -->
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&q={{ query }}&genre={{ selected_genre }}">&laquo; 首页</a>
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&genre={{ selected_genre }}">上一页</a>
+        {% endif %}
+
+        <span class="current">
+            第 {{ page_obj.number }} 页 / 共 {{ page_obj.paginator.num_pages }} 页
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&genre={{ selected_genre }}">下一页</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&q={{ query }}&genre={{ selected_genre }}">末页 &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}

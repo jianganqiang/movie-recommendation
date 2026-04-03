@@ -1,0 +1,186 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+nav {
+    background-color: #343a40;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-right: 20px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    transition: background-color 0.3s;
+}
+
+nav a:hover {
+    background-color: #495057;
+}
+
+nav button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+nav button:hover {
+    background-color: #c82333;
+}
+
+h1, h2, h3 {
+    color: #343a40;
+}
+
+/* 电影网格容器：使用 Grid 布局，每行5列 */
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);  /* 5列等宽 */
+    gap: 20px;                              /* 卡片之间的间距 */
+    margin: 20px 0;
+}
+
+/* 电影卡片样式 */
+.movie-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.movie-card:hover {
+    transform: scale(1.03);
+}
+
+.movie-card img {
+    width: 100%;            /* 让图片宽度填满卡片 */
+    height: 200px;          /* 固定高度，使卡片整齐 */
+    object-fit: cover;      /* 裁剪图片以填满，不变形 */
+    border-radius: 4px;
+}
+
+.movie-card p {
+    margin: 8px 0 4px;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;    /* 标题过长时显示省略号 */
+}
+
+/* 分页样式保持原样或可自行美化 */
+.pagination {
+    margin-top: 30px;
+    text-align: center;
+}
+.pagination a, .pagination .current {
+    display: inline-block;
+    padding: 5px 12px;
+    margin: 0 3px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #007bff;
+}
+.pagination .current {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+.pagination a:hover {
+    background-color: #e9ecef;
+}
+
+.pagination {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.pagination a {
+    color: #007bff;
+    text-decoration: none;
+    margin: 0 5px;
+    padding: 5px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
+}
+
+.pagination a:hover {
+    background-color: #e9ecef;
+}
+
+.pagination .current {
+    margin: 0 5px;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 3px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #343a40;
+    color: white;
+}
+
+tr:hover {
+    background-color: #f5f5f5;
+}
+
+button[type="submit"] {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button[type="submit"]:hover {
+    background-color: #218838;
+}
+
+form input[type="text"],
+form input[type="password"],
+form input[type="email"],
+form select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 250px;
+    margin: 5px 0;
+}
+
+form button[type="submit"] {
+    background-color: #007bff;
+}
+
+form button[type="submit"]:hover {
+    background-color: #0069d9;
+}

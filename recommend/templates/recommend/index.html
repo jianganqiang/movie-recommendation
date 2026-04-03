@@ -1,0 +1,76 @@
+{% extends 'recommend/base.html' %}
+
+{% block title %}{% if user.is_authenticated %}个性化推荐{% else %}热门电影{% endif %} - 电影推荐系统{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="mb-4">
+        {% if user.is_authenticated %}
+            <h1 class="mb-2">为你推荐</h1>
+            <p class="text-muted mb-0">
+                根据你的历史评分生成个性化电影推荐。
+            </p>
+        {% else %}
+            <h1 class="mb-2">热门电影</h1>
+            <p class="text-muted mb-0">
+                登录后可获得更符合你兴趣的个性化推荐。
+            </p>
+        {% endif %}
+    </div>
+
+    {% if movies %}
+        <div class="row g-4">
+            {% for movie in movies %}
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="card h-100 shadow-sm border-0">
+                        <a href="{% url 'movie_detail' movie.id %}" class="text-decoration-none text-dark">
+                            <img
+                                src="{{ movie.poster|default:'/static/recommend/images/default_poster.webp' }}"
+                                class="card-img-top"
+                                alt="{{ movie.title }}"
+                                style="height: 280px; object-fit: cover;"
+                            >
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title mb-2" style="min-height: 48px;">
+                                    {{ movie.title }}
+                                </h6>
+
+                                <p class="text-muted small mb-2">
+                                    {{ movie.genres|truncatechars:30 }}
+                                </p>
+
+                                <div class="mt-auto">
+                                    <p class="mb-1">
+                                        <strong>评分：</strong>{{ movie.avg_rating|floatformat:1 }}
+                                    </p>
+                                    <p class="text-muted small mb-0">
+                                        {{ movie.rating_count }} 人评分
+                                    </p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <h4 class="mb-3">暂时没有可展示的电影</h4>
+                <p class="text-muted mb-4">你可以先去电影列表浏览，或者稍后再试。</p>
+                <a href="{% url 'movie_list' %}" class="btn btn-primary">去电影列表</a>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'movie_list' %}" class="btn btn-outline-primary">浏览更多电影</a>
+
+        {% if not user.is_authenticated %}
+            <a href="{% url 'login' %}" class="btn btn-primary ms-2">登录获取推荐</a>
+        {% else %}
+            <a href="{% url 'profile' %}" class="btn btn-outline-secondary ms-2">我的评分记录</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
