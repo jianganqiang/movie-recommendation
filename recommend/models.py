@@ -9,6 +9,7 @@ class Movie(models.Model):
     title = models.CharField(max_length=255)
     genres = models.CharField(max_length=255)
     poster = models.CharField(max_length=500, blank=True, null=True)  # 图片路径或URL
+    overview = models.TextField(blank=True, null=True)  # 新增：电影简介
     avg_rating = models.FloatField(default=0.0)
     rating_count = models.IntegerField(default=0)
 

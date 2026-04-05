@@ -1,54 +1,127 @@
 {% extends 'recommend/base.html' %}
+{% block title %}电影列表 - 电影推荐系统{% endblock %}
+
 {% block content %}
-<h1>电影列表</h1>
-
-<!-- 搜索和筛选表单 -->
-<form method="get" action="{% url 'movie_list' %}" style="margin-bottom: 20px;">
-    <input type="text" name="q" placeholder="搜索电影标题..." value="{{ query }}">
-    <select name="genre">
-        <option value="">所有类型</option>
-        {% for genre in all_genres %}
-            <option value="{{ genre }}" {% if selected_genre == genre %}selected{% endif %}>{{ genre }}</option>
-        {% endfor %}
-    </select>
-    <button type="submit">筛选</button>
-</form>
-
-<!-- 电影网格 -->
-<div class="movie-grid">
-    {% for movie in page_obj %}
-    <div class="movie-card">
-        <a href="{% url 'movie_detail' movie.id %}">
-            {% if movie.poster %}
-                <img src="{{ movie.poster }}" alt="{{ movie.title }}" width="150">
-            {% else %}
-                <img src="/static/recommend/images/default_poster.webp" alt="暂无海报" width="150">
-            {% endif %}
-            <p>{{ movie.title }}</p>
-            <p>评分: {{ movie.avg_rating|floatformat:1 }} ({{ movie.rating_count }}人)</p>
-        </a>
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="mb-2">电影列表</h1>
+        <p class="text-muted mb-0">支持按电影标题搜索，也可以按类型筛选。</p>
     </div>
-    {% empty %}
-    <p>没有找到电影。</p>
-    {% endfor %}
-</div>
 
-<!-- 分页导航 -->
-<div class="pagination">
-    <span class="step-links">
-        {% if page_obj.has_previous %}
-            <a href="?page=1&q={{ query }}&genre={{ selected_genre }}">&laquo; 首页</a>
-            <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&genre={{ selected_genre }}">上一页</a>
-        {% endif %}
+    <!-- 搜索和筛选表单 -->
+    <form method="get" action="{% url 'movie_list' %}" class="row g-3 mb-4">
+        <div class="col-md-6">
+            <input
+                type="text"
+                name="q"
+                class="form-control"
+                placeholder="搜索电影标题..."
+                value="{{ query }}"
+            >
+        </div>
 
-        <span class="current">
-            第 {{ page_obj.number }} 页 / 共 {{ page_obj.paginator.num_pages }} 页
-        </span>
+        <div class="col-md-4">
+            <select name="genre" class="form-select">
+                <option value="">所有类型</option>
+                {% for genre in all_genres %}
+                    <option value="{{ genre }}" {% if selected_genre == genre %}selected{% endif %}>
+                        {{ genre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&genre={{ selected_genre }}">下一页</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}&q={{ query }}&genre={{ selected_genre }}">末页 &raquo;</a>
-        {% endif %}
-    </span>
+        <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-primary">筛选</button>
+        </div>
+    </form>
+
+    {% if page_obj %}
+        <div class="row g-4">
+            {% for movie in page_obj %}
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                    <div class="card h-100 shadow-sm border-0">
+                        <a href="{% url 'movie_detail' movie.id %}" class="text-decoration-none text-dark">
+                            {% if movie.poster %}
+                                <img
+                                    src="{{ movie.poster }}"
+                                    alt="{{ movie.title }}"
+                                    class="card-img-top"
+                                    style="height: 360px; object-fit: cover;"
+                                >
+                            {% else %}
+                                <img
+                                    src="/static/recommend/images/default_poster.webp"
+                                    alt="暂无海报"
+                                    class="card-img-top"
+                                    style="height: 360px; object-fit: cover;"
+                                >
+                            {% endif %}
+
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title mb-2">{{ movie.title }}</h5>
+
+                                <p class="text-muted small mb-2">
+                                    {{ movie.genres|truncatechars:40 }}
+                                </p>
+
+                                <p class="small text-secondary mb-3" style="min-height: 72px; line-height: 1.6;">
+                                    {% if movie.overview %}
+                                        {{ movie.overview|truncatechars:80 }}
+                                    {% else %}
+                                        暂无简介
+                                    {% endif %}
+                                </p>
+
+                                <div class="mt-auto">
+                                    <p class="mb-1">
+                                        <strong>评分：</strong>{{ movie.avg_rating|floatformat:1 }}
+                                    </p>
+                                    <p class="text-muted small mb-0">
+                                        {{ movie.rating_count }} 人评分
+                                    </p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-light border text-center py-5">
+                        没有找到电影。
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- 分页导航 -->
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center flex-wrap">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&q={{ query }}&genre={{ selected_genre }}">首页</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&genre={{ selected_genre }}">上一页</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        第 {{ page_obj.number }} 页 / 共 {{ page_obj.paginator.num_pages }} 页
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&genre={{ selected_genre }}">下一页</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&q={{ query }}&genre={{ selected_genre }}">末页</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
 </div>
 {% endblock %}

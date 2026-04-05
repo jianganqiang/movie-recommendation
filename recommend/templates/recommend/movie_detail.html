@@ -22,11 +22,22 @@
                         <strong>类型：</strong>{{ movie.genres }}
                     </p>
 
-                    <p class="mb-4">
+                    <p class="mb-3">
                         <strong>平均评分：</strong>
                         {{ movie.avg_rating|floatformat:1 }}
                         <span class="text-muted">（{{ movie.rating_count }} 人评分）</span>
                     </p>
+
+                    <div class="mb-4">
+                        <h5 class="mb-2">电影简介</h5>
+                        {% if movie.overview %}
+                            <p class="text-muted" style="line-height: 1.8;">
+                                {{ movie.overview }}
+                            </p>
+                        {% else %}
+                            <p class="text-muted">暂无简介</p>
+                        {% endif %}
+                    </div>
 
                     {% if user.is_authenticated %}
                         <div class="mb-4 p-3 bg-light rounded border">

@@ -21,22 +21,28 @@
     {% if movies %}
         <div class="row g-4">
             {% for movie in movies %}
-                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                     <div class="card h-100 shadow-sm border-0">
                         <a href="{% url 'movie_detail' movie.id %}" class="text-decoration-none text-dark">
                             <img
                                 src="{{ movie.poster|default:'/static/recommend/images/default_poster.webp' }}"
                                 class="card-img-top"
                                 alt="{{ movie.title }}"
-                                style="height: 280px; object-fit: cover;"
+                                style="height: 360px; object-fit: cover;"
                             >
                             <div class="card-body d-flex flex-column">
-                                <h6 class="card-title mb-2" style="min-height: 48px;">
-                                    {{ movie.title }}
-                                </h6>
+                                <h5 class="card-title mb-2">{{ movie.title }}</h5>
 
                                 <p class="text-muted small mb-2">
-                                    {{ movie.genres|truncatechars:30 }}
+                                    {{ movie.genres|truncatechars:40 }}
+                                </p>
+
+                                <p class="small text-secondary mb-3" style="min-height: 72px; line-height: 1.6;">
+                                    {% if movie.overview %}
+                                        {{ movie.overview|truncatechars:70 }}
+                                    {% else %}
+                                        暂无简介
+                                    {% endif %}
                                 </p>
 
                                 <div class="mt-auto">

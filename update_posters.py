@@ -27,9 +27,9 @@ TMDB_API_BASE = 'https://api.themoviedb.org/3'
 TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'   # 前端展示足够用
 
 
-def get_tmdb_poster_url(tmdb_id: int):
+def get_tmdb_movie_info(tmdb_id: int):
     """
-    根据 tmdb_id 获取主海报 URL
+    根据 tmdb_id 获取电影主海报 URL 和电影简介
     """
     url = f'{TMDB_API_BASE}/movie/{tmdb_id}'
     resp = requests.get(
@@ -42,10 +42,14 @@ def get_tmdb_poster_url(tmdb_id: int):
     data = resp.json()
 
     poster_path = data.get('poster_path')
-    if not poster_path:
-        return None
+    poster_url = f'{TMDB_IMAGE_BASE}{poster_path}' if poster_path else None
 
-    return f'{TMDB_IMAGE_BASE}{poster_path}'
+    overview = (data.get('overview') or '').strip()
+
+    return {
+        'poster_url': poster_url,
+        'overview': overview,
+    }
 
 
 def get_tmdb_id_from_imdb(imdb_id: str):
@@ -100,8 +104,10 @@ def main():
 
     for movie in movies:
         try:
-            # 已经有海报就跳过；如果你想强制刷新，把这几行删掉
-            if movie.poster:
+            # 如果海报和简介都有了，就跳过
+            has_poster = bool(movie.poster and str(movie.poster).strip())
+            has_overview = bool(movie.overview and str(movie.overview).strip())
+            if has_poster and has_overview:
                 skipped_count += 1
                 continue
 
@@ -122,17 +128,29 @@ def main():
                 skipped_count += 1
                 continue
 
-            poster_url = get_tmdb_poster_url(int(float(tmdb_id)))
-            if not poster_url:
-                print(f'[跳过] movieId={movie.id} 未找到 poster_path')
+            movie_info = get_tmdb_movie_info(int(float(tmdb_id)))
+            poster_url = movie_info.get('poster_url')
+            overview = movie_info.get('overview')
+
+            update_fields = []
+
+            if poster_url and not has_poster:
+                movie.poster = poster_url
+                update_fields.append('poster')
+
+            if overview and not has_overview:
+                movie.overview = overview
+                update_fields.append('overview')
+
+            if not update_fields:
+                print(f'[跳过] movieId={movie.id} 未找到可更新的信息')
                 skipped_count += 1
                 continue
 
-            movie.poster = poster_url
-            movie.save(update_fields=['poster'])
+            movie.save(update_fields=update_fields)
 
             updated_count += 1
-            print(f'[成功] {movie.id} | {movie.title} -> {poster_url}')
+            print(f'[成功] {movie.id} | {movie.title} | 更新字段: {", ".join(update_fields)}')
 
             # 简单限速，避免请求太快
             time.sleep(0.15)
