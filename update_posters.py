@@ -24,12 +24,16 @@ HEADERS = {
 }
 
 TMDB_API_BASE = 'https://api.themoviedb.org/3'
-TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'   # 前端展示足够用
+TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
 
 
 def get_tmdb_movie_info(tmdb_id: int):
     """
-    根据 tmdb_id 获取电影主海报 URL 和电影简介
+    根据 tmdb_id 获取电影信息：
+    - 海报
+    - 中文片名
+    - 中文类型
+    - 中文简介
     """
     url = f'{TMDB_API_BASE}/movie/{tmdb_id}'
     resp = requests.get(
@@ -44,10 +48,20 @@ def get_tmdb_movie_info(tmdb_id: int):
     poster_path = data.get('poster_path')
     poster_url = f'{TMDB_IMAGE_BASE}{poster_path}' if poster_path else None
 
+    zh_title = (data.get('title') or '').strip()
     overview = (data.get('overview') or '').strip()
+
+    genres_data = data.get('genres', [])
+    zh_genres = '|'.join(
+        g.get('name', '').strip()
+        for g in genres_data
+        if g.get('name')
+    )
 
     return {
         'poster_url': poster_url,
+        'zh_title': zh_title,
+        'zh_genres': zh_genres,
         'overview': overview,
     }
 
@@ -84,7 +98,15 @@ def get_tmdb_id_from_imdb(imdb_id: str):
     return results[0].get('id')
 
 
+def safe_str(value):
+    """
+    把 None 转成空字符串，方便判断
+    """
+    return str(value).strip() if value is not None else ''
+
+
 def main():
+    print('开始读取 links.csv ...')
     links_df = pd.read_csv(LINKS_CSV)
 
     # 建立 movieId -> {tmdbId, imdbId} 映射
@@ -96,25 +118,22 @@ def main():
         for _, row in links_df.iterrows()
     }
 
+    movies_qs = Movie.objects.all().order_by('id')
+    total = movies_qs.count()
+
     updated_count = 0
     skipped_count = 0
     failed_count = 0
 
-    movies = Movie.objects.all().iterator()
+    print(f'共需处理 {total} 部电影')
+    print('开始更新...\n')
 
-    for movie in movies:
+    for idx, movie in enumerate(movies_qs.iterator(chunk_size=200), 1):
         try:
-            # 如果海报和简介都有了，就跳过
-            has_poster = bool(movie.poster and str(movie.poster).strip())
-            has_overview = bool(movie.overview and str(movie.overview).strip())
-            if has_poster and has_overview:
-                skipped_count += 1
-                continue
-
             row = link_map.get(movie.id)
             if not row:
-                print(f'[跳过] movieId={movie.id} 在 links.csv 中不存在')
                 skipped_count += 1
+                print(f'[{idx}/{total}] [跳过] movieId={movie.id} | {movie.title} | links.csv 中不存在该电影')
                 continue
 
             tmdb_id = row.get('tmdbId')
@@ -124,42 +143,59 @@ def main():
                 tmdb_id = get_tmdb_id_from_imdb(imdb_id)
 
             if not tmdb_id:
-                print(f'[跳过] movieId={movie.id} 无可用 tmdbId')
                 skipped_count += 1
+                print(f'[{idx}/{total}] [跳过] movieId={movie.id} | {movie.title} | 无可用 tmdbId')
                 continue
 
-            movie_info = get_tmdb_movie_info(int(float(tmdb_id)))
-            poster_url = movie_info.get('poster_url')
-            overview = movie_info.get('overview')
+            info = get_tmdb_movie_info(int(float(tmdb_id)))
 
             update_fields = []
 
-            if poster_url and not has_poster:
-                movie.poster = poster_url
+            # poster：只在没有海报时更新
+            if info.get('poster_url') and not safe_str(movie.poster):
+                movie.poster = info['poster_url']
                 update_fields.append('poster')
 
-            if overview and not has_overview:
-                movie.overview = overview
+            # zh_title：有内容就更新
+            if info.get('zh_title') and safe_str(getattr(movie, 'zh_title', '')) != info['zh_title']:
+                movie.zh_title = info['zh_title']
+                update_fields.append('zh_title')
+
+            # zh_genres：有内容就更新
+            if info.get('zh_genres') and safe_str(getattr(movie, 'zh_genres', '')) != info['zh_genres']:
+                movie.zh_genres = info['zh_genres']
+                update_fields.append('zh_genres')
+
+            # overview：只在没有简介时更新
+            if info.get('overview') and not safe_str(getattr(movie, 'overview', '')):
+                movie.overview = info['overview']
                 update_fields.append('overview')
 
             if not update_fields:
-                print(f'[跳过] movieId={movie.id} 未找到可更新的信息')
                 skipped_count += 1
+                print(f'[{idx}/{total}] [跳过] movieId={movie.id} | {movie.title} | 无需更新')
                 continue
 
             movie.save(update_fields=update_fields)
-
             updated_count += 1
-            print(f'[成功] {movie.id} | {movie.title} | 更新字段: {", ".join(update_fields)}')
 
-            # 简单限速，避免请求太快
+            print(
+                f'[{idx}/{total}] [成功] movieId={movie.id} | {movie.title} | '
+                f'更新字段: {", ".join(update_fields)}'
+            )
+
+            # 简单限速，避免请求过快
             time.sleep(0.15)
 
         except Exception as e:
             failed_count += 1
-            print(f'[失败] movieId={movie.id}, title={movie.title}, error={e}')
+            print(
+                f'[{idx}/{total}] [失败] movieId={movie.id} | {movie.title} | error={e}'
+            )
+            time.sleep(0.15)
 
     print('\n=== 完成 ===')
+    print(f'总数: {total}')
     print(f'更新成功: {updated_count}')
     print(f'跳过: {skipped_count}')
     print(f'失败: {failed_count}')

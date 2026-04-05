@@ -1,5 +1,5 @@
 {% extends 'recommend/base.html' %}
-{% block title %}{{ movie.title }} - 电影详情{% endblock %}
+{% block title %}{{ movie.zh_title|default:movie.title }} - 电影详情{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -8,7 +8,7 @@
             <div class="col-md-4 p-4 text-center">
                 <img
                     src="{{ movie.poster|default:'/static/recommend/images/default_poster.webp' }}"
-                    alt="{{ movie.title }}"
+                    alt="{{ movie.zh_title|default:movie.title }}"
                     class="img-fluid rounded shadow-sm"
                     style="max-height: 420px; object-fit: cover;"
                 >
@@ -16,10 +16,13 @@
 
             <div class="col-md-8">
                 <div class="card-body p-4">
-                    <h1 class="card-title mb-3">{{ movie.title }}</h1>
+
+                    <h1 class="card-title mb-3">
+                        {{ movie.zh_title|default:movie.title }}
+                    </h1>
 
                     <p class="mb-2">
-                        <strong>类型：</strong>{{ movie.genres }}
+                        <strong>类型：</strong>{{ movie.zh_genres|default:movie.genres }}
                     </p>
 
                     <p class="mb-3">

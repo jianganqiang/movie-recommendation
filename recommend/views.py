@@ -17,18 +17,60 @@ from .models import Movie, Rating
 
 SIM_PATH = os.path.join(settings.BASE_DIR, 'item_sim.pkl')
 
+# 英文类型 -> 中文类型
+GENRE_EN_TO_ZH = {
+    'Action': '动作',
+    'Adventure': '冒险',
+    'Animation': '动画',
+    'Children': '儿童',
+    'Comedy': '喜剧',
+    'Crime': '犯罪',
+    'Documentary': '纪录片',
+    'Drama': '剧情',
+    'Fantasy': '奇幻',
+    'Film-Noir': '黑色电影',
+    'Horror': '恐怖',
+    'IMAX': 'IMAX',
+    'Musical': '歌舞',
+    'Mystery': '悬疑',
+    'Romance': '爱情',
+    'Sci-Fi': '科幻',
+    'Thriller': '惊悚',
+    'War': '战争',
+    'Western': '西部',
+    '(no genres listed)': '未分类',
+}
+
+# 中文类型 -> 英文类型（用于兼容传中文时的情况）
+GENRE_ZH_TO_EN = {zh: en for en, zh in GENRE_EN_TO_ZH.items()}
+
 
 def get_all_genres():
     """
-    提取数据库中所有电影类型，供列表页筛选使用
+    提取数据库中的所有电影类型。
+    返回格式：
+    [
+        {'en': 'Action', 'zh': '动作'},
+        {'en': 'Comedy', 'zh': '喜剧'},
+        ...
+    ]
     """
     genres_set = set()
+
     for genres_str in Movie.objects.exclude(genres__isnull=True).exclude(genres='').values_list('genres', flat=True):
         for genre in str(genres_str).split('|'):
             genre = genre.strip()
-            if genre and genre != '(no genres listed)':
+            if genre:
                 genres_set.add(genre)
-    return sorted(genres_set)
+
+    genre_list = []
+    for genre_en in sorted(genres_set):
+        genre_list.append({
+            'en': genre_en,
+            'zh': GENRE_EN_TO_ZH.get(genre_en, genre_en)
+        })
+
+    return genre_list
 
 
 def get_movie_genres(movie):
@@ -41,7 +83,7 @@ def get_movie_genres(movie):
     genres = []
     for genre in str(movie.genres).split('|'):
         genre = genre.strip()
-        if genre and genre != '(no genres listed)':
+        if genre:
             genres.append(genre)
     return genres
 
@@ -143,7 +185,6 @@ def get_genre_based_recommendations(user, limit=12):
     for rating_obj in user_ratings:
         rated_movie_ids.add(rating_obj.movie_id)
 
-        # 评分越高，类型偏好权重越大
         weight = max(float(rating_obj.rating) - 2.5, 0)
         if weight <= 0:
             continue
@@ -266,17 +307,27 @@ def profile_view(request):
 def movie_list(request):
     """
     电影列表页：支持关键字搜索、类型筛选、分页
+    下拉框显示中文，但提交值仍然是英文 genre
     """
     query = request.GET.get('q', '').strip()
     selected_genre = request.GET.get('genre', '').strip()
 
+    # 兼容：如果前端意外传了中文类型，也转回英文
+    selected_genre_en = GENRE_ZH_TO_EN.get(selected_genre, selected_genre)
+
     movies = Movie.objects.all()
 
     if query:
-        movies = movies.filter(title__icontains=query)
+        # 如果你已经给 Movie 模型加了 zh_title，这里也能同时搜中文名
+        if hasattr(Movie, 'zh_title'):
+            movies = movies.filter(
+                Q(title__icontains=query) | Q(zh_title__icontains=query)
+            )
+        else:
+            movies = movies.filter(title__icontains=query)
 
-    if selected_genre:
-        movies = movies.filter(genres__icontains=selected_genre)
+    if selected_genre_en:
+        movies = movies.filter(genres__icontains=selected_genre_en)
 
     movies = movies.order_by('-rating_count', '-avg_rating', 'title')
 
@@ -287,7 +338,7 @@ def movie_list(request):
     return render(request, 'recommend/movie_list.html', {
         'page_obj': page_obj,
         'query': query,
-        'selected_genre': selected_genre,
+        'selected_genre': selected_genre_en,
         'all_genres': get_all_genres(),
     })
 

@@ -7,7 +7,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class Movie(models.Model):
     id = models.IntegerField(primary_key=True)  # 使用 MovieLens 的 movieId
     title = models.CharField(max_length=255)
+    zh_title = models.CharField(max_length=255, blank=True, null=True)  # 新增：中文片名
+
     genres = models.CharField(max_length=255)
+    zh_genres = models.CharField(max_length=255, blank=True, null=True)  # 新增：中文类型
     poster = models.CharField(max_length=500, blank=True, null=True)  # 图片路径或URL
     overview = models.TextField(blank=True, null=True)  # 新增：电影简介
     avg_rating = models.FloatField(default=0.0)

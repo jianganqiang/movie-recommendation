@@ -28,10 +28,10 @@
                                 <tr>
                                     <td>
                                         <a href="{% url 'movie_detail' rating.movie.id %}" class="text-decoration-none fw-semibold">
-                                            {{ rating.movie.title }}
+                                            {{ rating.movie.zh_title|default:rating.movie.title }}
                                         </a>
                                         <div class="text-muted small mt-1">
-                                            {{ rating.movie.genres }}
+                                            {{ rating.movie.zh_genres|default:rating.movie.genres }}
                                         </div>
                                     </td>
                                     <td>
