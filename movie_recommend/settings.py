@@ -139,6 +139,6 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-# 用户名 (leave blank to use '86151'): jianganqiang
+# 用户名 (leave blank to use '86151'): ksd
 # 电子邮件地址: 2332381447@qq.com
 # Password: 123456
